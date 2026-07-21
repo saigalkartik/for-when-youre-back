@@ -1,39 +1,64 @@
-const platformOf=url=>url.includes("tiktok")?"TikTok":url.includes("instagram")?"Instagram":url.includes("x.com")?"X":url.includes("facebook")?"Marketplace":url.includes("spotify")?"Spotify":"Link";
-const slug=url=>{try{let u=new URL(url);return u.pathname.split("/").filter(Boolean).pop()||"saved";}catch{return"saved"}};
-const previewText=(platform,i)=>({TikTok:["something I wanted you to see","for you, obviously","saved this for us","this felt very you","a little thought"],Instagram:["a little mood","saved for you ♡","this one","you'll get it","love this"],X:["internet found treasure","you need to see this","this made me think of you"],Marketplace:["maybe this one?","for our place?","look at this","found this"],Spotify:["listen to this","this song ♡","for the drive home","made me cry","press play"]}[platform]||["saved for you"])[i%5];
-
 const sections=[
- {id:"tiktoks",title:"TikToks",items:COLLECTION.tiktoks,kind:"rail"},
- {id:"whenMissed",title:"When I Missed You",items:COLLECTION.whenMissed,kind:"rail"},
- {id:"moodBoard",title:"Mood Board",items:COLLECTION.moodBoard,kind:"masonry"},
- {id:"marketplace",title:"Marketplace",items:COLLECTION.marketplace,kind:"rail market"},
- {id:"music",title:"Music",items:COLLECTION.music,kind:"rail music"}
+{id:"tiktoks",label:"TikToks",items:COLLECTION.tiktoks},
+{id:"whenMissed",label:"When I Missed You",items:COLLECTION.whenMissed},
+{id:"moodBoard",label:"Mood Board",items:COLLECTION.moodBoard},
+{id:"marketplace",label:"Marketplace",items:COLLECTION.marketplace},
+{id:"music",label:"Music",items:COLLECTION.music}
 ];
-const sectionsEl=document.querySelector("#sections");
+const allItems=sections.flatMap(s=>s.items.map((x,i)=>({...x,section:s.id,label:s.label,index:i})));
+let active="all", query="";
 let seen=new Set(JSON.parse(localStorage.getItem("seenLinks")||"[]"));
-function card(item,i,section){
- const p=platformOf(item.url), note=item.note||"";
- const el=document.createElement("article"); el.className="card"; el.dataset.url=item.url;
- const isMusic=p==="Spotify";
- el.innerHTML=`<div class="preview ${isMusic?"spotify-art":""}">
-   <span class="platform">${p}</span><span class="number">${i+1}</span>
-   <div class="preview-word">${previewText(p,i)}</div>
+const feed=document.getElementById("feed");
+const platform=url=>url.includes("tiktok")?"TikTok":url.includes("instagram")?"Instagram":url.includes("x.com")?"X":url.includes("facebook")?"Marketplace":url.includes("spotify")?"Spotify":"Link";
+const previewWords={
+TikTok:["saved this for you","you'll get it","this felt very you","needed to send you this","for when you're back"],
+Instagram:["a little mood","saved for you","this one","thought you'd like this","love this"],
+X:["internet treasure","you need to see this","this made me think of you","saved this","had to send this"],
+Marketplace:["maybe this one?","look at this","found this","for our place?","potentially ours"],
+Spotify:["listen to this","for the drive home","this song ♡","press play","one for you"]
+};
+const backgrounds={
+TikTok:["#d9d1ca","#b8b0a8","#8f8179","#c4b7aa","#a7968d"],
+Instagram:["#cbb7aa","#9c8e87","#d2c3b7","#a99c95","#c4aaa2"],
+X:["#b6b5b1","#8e918f","#c3c0b9","#9c9b96","#b4aaa2"],
+Marketplace:["#d3c6b7","#b6a897","#c9b9a6","#a99b8c","#c4b7a7"],
+Spotify:["#b9a99f","#8f7d76","#c7b8ae","#a39088","#b5a19a"]
+};
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
+function card(item,globalIndex){
+ const p=platform(item.url), word=previewWords[p][item.index%5], bg=backgrounds[p][item.index%5];
+ const el=document.createElement("article");el.className="card";
+ const note=item.note?`“${esc(item.note)}”`:`${item.section==="moodBoard"?"Saved image / post":item.section==="marketplace"?"Saved marketplace find":item.section==="music"?"Saved song":"Saved for you"}`;
+ el.innerHTML=`<div class="preview" style="background:${bg}">
+   <div class="preview-bg"></div><div class="preview-shade"></div>
+   <span class="platform">${p}</span><span class="card-number">${String(globalIndex+1).padStart(2,"0")}</span>
+   <div class="preview-center">${p==="Spotify"?'<span class="music-note">♫</span>':esc(word)}</div>
  </div>
- <div class="card-body">${note?`<div class="note">“${note}”</div>`:`<div class="note">${section.id==="moodBoard"?"saved image / post":section.id==="marketplace"?"saved marketplace find":isMusic?"saved song":"saved for you"}</div>`}
- <a class="open" href="${item.url}" target="_blank" rel="noopener">Open on ${p} ↗</a></div>`;
- el.querySelector(".open").addEventListener("click",()=>{seen.add(item.url);localStorage.setItem("seenLinks",JSON.stringify([...seen]));updateProgress()});
+ <div class="card-content">
+   <div class="meta"><span>${esc(item.label)}</span><span>${p}</span></div>
+   <div class="note ${item.note?"":"empty"}">${note}</div>
+   <div class="card-actions">
+     <a class="open" href="${esc(item.url)}" target="_blank" rel="noopener">Open original ↗</a>
+     <button class="seen ${seen.has(item.url)?"is-seen":""}" aria-label="Mark as seen">${seen.has(item.url)?"✓":"○"}</button>
+   </div>
+ </div>`;
+ el.querySelector(".open").addEventListener("click",()=>markSeen(item.url));
+ el.querySelector(".seen").addEventListener("click",()=>{markSeen(item.url);render()});
  return el;
 }
-sections.forEach(s=>{
- const sec=document.createElement("section");sec.id=s.id;sec.className="section "+(s.kind.includes("masonry")?"":"");
- sec.innerHTML=`<div class="section-head"><div><h2>${s.title}<span class="count">${s.items.length} saved</span></h2></div><button class="view-all">View all</button></div><div class="${s.kind}"></div>`;
- const rail=sec.querySelector(".rail,.masonry");s.items.forEach((it,i)=>rail.appendChild(card(it,i,s)));
- sec.querySelector(".view-all").onclick=()=>{rail.classList.toggle("expanded");if(rail.classList.contains("expanded")){rail.style.gridAutoFlow="row";rail.style.gridTemplateColumns="repeat(auto-fit,minmax(190px,1fr))";rail.style.overflow="visible";}};
- sectionsEl.appendChild(sec);
-});
-document.querySelector("#laterLink").href=COLLECTION.sendLater.url;
-function updateProgress(){let all=sections.flatMap(s=>s.items);let pct=Math.round(seen.size/all.length*100);document.querySelector("#progressBar").style.width=pct+"%";document.querySelector("#progressText").textContent=`${pct}% explored`;}
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.getElementById(b.dataset.target).scrollIntoView({behavior:"smooth"});document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active")});
-const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.target===e.target.id))}}),{rootMargin:"-30% 0px -60% 0px"});
-sections.forEach(s=>obs.observe(document.getElementById(s.id)));
-updateProgress();
+function markSeen(url){seen.add(url);localStorage.setItem("seenLinks",JSON.stringify([...seen]));updateStats();showToast("Marked as explored")}
+function updateStats(){document.getElementById("total").textContent=allItems.length;document.getElementById("explored").textContent=Math.round(seen.size/allItems.length*100)+"%"}
+function render(){
+ feed.innerHTML="";
+ let list=allItems.filter(x=>(active==="all"||x.section===active)&&(!query||JSON.stringify(x).toLowerCase().includes(query.toLowerCase())));
+ if(!list.length){feed.innerHTML='<div class="empty-state">Nothing saved here yet.</div>';return}
+ list.forEach((x,i)=>feed.appendChild(card(x,i)));
+}
+document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".filter").forEach(b=>b.classList.remove("active"));btn.classList.add("active");active=btn.dataset.filter;render()}));
+document.getElementById("search").addEventListener("input",e=>{query=e.target.value;render()});
+const theme=document.getElementById("theme");
+theme.addEventListener("click",()=>{const dark=document.documentElement.dataset.theme==="dark";document.documentElement.dataset.theme=dark?"":"dark";localStorage.setItem("theme",dark?"light":"dark")});
+if(localStorage.getItem("theme")==="dark")document.documentElement.dataset.theme="dark";
+document.getElementById("laterLink").href=COLLECTION.sendLater.url;
+function showToast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1200)}
+updateStats();render();
