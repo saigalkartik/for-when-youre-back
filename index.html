@@ -2,46 +2,60 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>For when you're finally back ♡</title>
-<meta name="description" content="A little bit of everything I saved for you.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>for when you're back</title>
+<meta name="description" content="Things I saved for you while you were away.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="hero">
-  <div class="hero-photo"></div><div class="hero-overlay"></div>
-  <div class="hero-content">
-    <div class="eyebrow">a little digital scrapbook</div>
-    <h1>For when you're<br>finally back <span>♥</span></h1>
-    <p>a little bit of everything I saved for you <i>✦</i></p>
-    <div class="hero-note">take your time.<br>miss you.<br>mean it. ♡</div>
+<header class="topbar">
+  <a class="brand" href="#all">for when you're back</a>
+  <div class="top-actions">
+    <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search saved things…"></label>
+    <button id="theme" class="icon-btn" aria-label="Toggle theme">◐</button>
   </div>
 </header>
-<nav class="nav" id="nav">
-  <button data-target="home" class="active">⌂ Home</button>
-  <button data-target="tiktoks">♪ TikToks</button>
-  <button data-target="whenMissed">♡ When I Missed You</button>
-  <button data-target="moodBoard">▧ Mood Board</button>
-  <button data-target="marketplace">⌂ Marketplace</button>
-  <button data-target="music">♫ Music</button>
-</nav>
-<main id="app">
-<section id="home" class="intro">
-  <div><span class="heart">♡</span> Start wherever you want</div>
-  <div class="progress"><span id="progressBar"></span></div>
-  <div id="progressText">0% explored</div>
+
+<main>
+<section class="welcome">
+  <div>
+    <p class="kicker">a private collection</p>
+    <h1>Things I saved<br>for you while you were away.</h1>
+    <p class="sub">Scroll, browse, listen, and open whatever catches your eye.</p>
+  </div>
+  <div class="stats">
+    <div><strong id="total">0</strong><span>saved</span></div>
+    <div><strong id="explored">0%</strong><span>explored</span></div>
+  </div>
 </section>
-<div id="sections"></div>
-<section class="later">
-  <div class="later-label">not yet</div><h2>Saved for later</h2>
-  <p>One little thing I decided to send you later ♡</p>
+
+<nav class="filters" id="filters">
+  <button class="filter active" data-filter="all">All</button>
+  <button class="filter" data-filter="tiktoks">TikToks</button>
+  <button class="filter" data-filter="whenMissed">When I Missed You</button>
+  <button class="filter" data-filter="moodBoard">Mood Board</button>
+  <button class="filter" data-filter="marketplace">Marketplace</button>
+  <button class="filter" data-filter="music">Music</button>
+</nav>
+
+<section id="feed" class="feed"></section>
+
+<section class="later-card">
+  <div>
+    <p class="kicker">saved for later</p>
+    <h2>One more thing.</h2>
+    <p>I decided this one deserved its own little corner.</p>
+  </div>
   <a id="laterLink" target="_blank" rel="noopener">Open when the time feels right ↗</a>
 </section>
 </main>
-<footer>made with love, for you <span>♥</span></footer>
+
+<footer>made for you</footer>
+<div id="toast" class="toast"></div>
+
 <script src="links.js"></script>
 <script src="app.js"></script>
 </body>
